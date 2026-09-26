@@ -1,3 +1,4 @@
+use serde::{Deserialize, Serialize};
 use std::collections::{HashSet, VecDeque};
 
 #[derive(PartialEq, Eq, Hash, Clone, Copy)]
@@ -8,68 +9,59 @@ pub struct Coordinates {
 
 impl Coordinates {
     pub fn diagonal_index(&self) -> isize {
-        (self.row as isize) - (self.col as isize) 
+        (self.row as isize) - (self.col as isize)
     }
 
     pub fn antidiagonal_index(&self) -> usize {
         self.row + self.col
     }
+
+    pub fn same_row(first: &Coordinates, second: &Coordinates) -> bool {
+        first.row == second.row
+    }
+
+    pub fn same_col(first: &Coordinates, second: &Coordinates) -> bool {
+        first.col == second.col
+    }
+
+    pub fn diagonally_adjacent(first: &Coordinates, second: &Coordinates) -> bool {
+        first.row.abs_diff(second.row) <= 1 && first.col.abs_diff(second.col) <= 1
+    }
+
+    pub fn orthogonal_distance(first: &Coordinates, second: &Coordinates) -> usize {
+        first.row.abs_diff(second.row) + first.col.abs_diff(second.col)
+    }
+
+    pub fn orthogonally_adjacent(first: &Coordinates, second: &Coordinates) -> bool {
+        Self::orthogonal_distance(first, second) <= 1
+    }
+
+    pub fn same_diagonal(first: &Coordinates, second: &Coordinates) -> bool {
+        first.diagonal_index() == second.diagonal_index()
+    }
+
+    pub fn same_antidiagonal(first: &Coordinates, second: &Coordinates) -> bool {
+        first.antidiagonal_index() == second.antidiagonal_index()
+    }
 }
 
-pub fn same_row(first: &Coordinates, second: &Coordinates) -> bool {
-    first.row == second.row
-}
-
-pub fn same_col(first: &Coordinates, second: &Coordinates) -> bool {
-    first.col == second.col
-}
-
-pub fn diagonally_adjacent(first: &Coordinates, second: &Coordinates) -> bool {
-    first.row.abs_diff(second.row) <= 1 && first.col.abs_diff(second.col) <= 1
-}
-
-pub fn orthogonal_distance(first: &Coordinates, second: &Coordinates) -> usize {
-    first.row.abs_diff(second.row) + first.col.abs_diff(second.col)
-}
-
-pub fn orthogonally_adjacent(first: &Coordinates, second: &Coordinates) -> bool {
-    orthogonal_distance(first, second) <= 1
-}
-
-pub fn same_diagonal(first: &Coordinates, second: &Coordinates) -> bool {
-    first.diagonal_index() == second.diagonal_index()
-}
-
-pub fn same_antidiagonal(first: &Coordinates, second: &Coordinates) -> bool {
-    first.antidiagonal_index() == second.antidiagonal_index()
-}
-
+#[derive(Clone, Serialize, Deserialize)]
 pub struct Board2D<T> {
-    size: usize,
+    pub size: usize,
     tiles: Vec<T>,
 }
 
-impl<T: Clone> Board2D<T> {
-    pub fn new(size: usize, tile: T) -> Board2D<T> {
-        let tiles = vec![tile; size * size];
+impl<T: Clone + Default> Board2D<T> {
+    pub fn new(size: usize) -> Board2D<T> {
+        let tiles = vec![T::default(); size * size];
         Board2D { size, tiles }
     }
 }
 
 impl<T> Board2D<T> {
-    const ORTHOGONAL_OFFSETS: [(isize, isize); 4] = [
-        ( 0,  1),
-        ( 0, -1),
-        ( 1,  0),
-        (-1,  0),
-    ];
+    const ORTHOGONAL_OFFSETS: [(isize, isize); 4] = [(0, 1), (0, -1), (1, 0), (-1, 0)];
 
-    const DIAGONAL_OFFSETS: [(isize, isize); 4] = [
-        ( 1,  1),
-        ( 1, -1),
-        (-1,  1),
-        (-1,  -1),
-    ];
+    const DIAGONAL_OFFSETS: [(isize, isize); 4] = [(1, 1), (1, -1), (-1, 1), (-1, -1)];
 
     fn coords_to_index(&self, coord: Coordinates) -> Option<usize> {
         if coord.row >= self.size || coord.col >= self.size {
@@ -173,10 +165,17 @@ impl<T> Board2D<T> {
             return None;
         }
 
-        Some(Coordinates { row: new_row as usize, col: new_col as usize })
+        Some(Coordinates {
+            row: new_row as usize,
+            col: new_col as usize,
+        })
     }
 
-    fn offsets_from(&self, coord: &Coordinates, all_offsets: impl IntoIterator<Item = (isize, isize)>) -> Vec<Coordinates> {
+    fn offsets_from(
+        &self,
+        coord: &Coordinates,
+        all_offsets: impl IntoIterator<Item = (isize, isize)>,
+    ) -> Vec<Coordinates> {
         all_offsets
             .into_iter()
             .filter_map(|offset| self.offset(coord, offset))
@@ -191,7 +190,11 @@ impl<T> Board2D<T> {
         self.offsets_from(coord, Self::DIAGONAL_OFFSETS)
     }
 
-    pub fn count_tiles(&self, coords: impl IntoIterator<Item = Coordinates>, predicate: impl Fn(&T) -> bool) -> usize {
+    pub fn count_tiles(
+        &self,
+        coords: impl IntoIterator<Item = Coordinates>,
+        predicate: impl Fn(&T) -> bool,
+    ) -> usize {
         coords
             .into_iter()
             .filter_map(|coord| self.get(coord))
@@ -209,11 +212,17 @@ impl<T> Board2D<T> {
     }
 
     pub fn row(&self, row: usize) -> Vec<Coordinates> {
-        (0..self.size).into_iter().map(|col| Coordinates{ row, col }).collect()
+        (0..self.size)
+            .into_iter()
+            .map(|col| Coordinates { row, col })
+            .collect()
     }
 
     pub fn col(&self, col: usize) -> Vec<Coordinates> {
-        (0..self.size).into_iter().map(|row| Coordinates{ row, col }).collect()
+        (0..self.size)
+            .into_iter()
+            .map(|row| Coordinates { row, col })
+            .collect()
     }
 
     pub fn diagonal(&self, diagonal: isize) -> Vec<Coordinates> {
@@ -233,7 +242,7 @@ impl<T> Board2D<T> {
     pub fn line(&self, coord: Coordinates, offsets: (isize, isize)) -> Vec<Coordinates> {
         let mut result = Vec::new();
 
-        while let Some(new_coord) = self.offset(&coord, offsets)  {
+        while let Some(new_coord) = self.offset(&coord, offsets) {
             result.push(new_coord);
         }
 

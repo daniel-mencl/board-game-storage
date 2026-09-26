@@ -8,6 +8,7 @@ edition = "2024"
 crate-type = ["cdylib", "staticlib", "lib"]
 
 [dependencies]
+enum_dispatch = "0.3.13"
 flutter_rust_bridge = "=2.0.0"
 rusqlite = { version = "0.31", features = ["bundled"] }
 serde = { version = "1.0", features = ["derive"] }
