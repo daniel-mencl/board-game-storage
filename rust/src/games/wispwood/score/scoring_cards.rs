@@ -6,24 +6,13 @@ use super::jacks::*;
 use super::orbs::*;
 
 use super::{
-    WispwoodBoard, WispwoodHeartScoringCard, WispwoodJackScoringCard, WispwoodOrbScoringCard,
-    WispwoodTreeScoringCard, WispwoodWitchScoringCard,
+    WispwoodBoard, WispwoodBoardScore, WispwoodHeartScoringCard, WispwoodJackScoringCard,
+    WispwoodOrbScoringCard, WispwoodTreeScoringCard, WispwoodWitchScoringCard,
 };
 
 #[enum_dispatch]
 pub trait WispwoodScoringCard {
     fn score(&self, board: &WispwoodBoard) -> u16;
-}
-
-#[derive(Clone, Serialize, Deserialize)]
-pub struct WispwoodBoardScore {
-    jacks: u16,
-    witches: u16,
-    orbs: u16,
-    hearts: u16,
-    trees: u16,
-    bonus: u16,
-    pub total: u16,
 }
 
 #[derive(Default, Clone, Serialize, Deserialize)]
@@ -52,15 +41,7 @@ impl WispwoodScoringCards {
         let hearts = self.heart.score(board);
         let trees = self.tree.score(board);
         let bonus = Self::round_bonus(board);
-        let total = jacks + witches + orbs + hearts + trees + bonus;
-        WispwoodBoardScore {
-            jacks,
-            witches,
-            orbs,
-            hearts,
-            trees,
-            bonus,
-            total,
-        }
+
+        WispwoodBoardScore::new(jacks, witches, orbs, hearts, trees, bonus)
     }
 }

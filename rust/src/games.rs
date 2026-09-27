@@ -1,2 +1,4 @@
-pub mod boards;
-pub mod wispwood;
+mod boards;
+mod wispwood;
+
+pub use wispwood::Wispwood;

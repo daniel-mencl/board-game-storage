@@ -1,9 +1,10 @@
-mod model;
 mod score;
+mod state;
 mod validate;
 
 use crate::core::Game;
-use model::{WispwoodScoreBreakdown, WispwoodState};
+use score::WispwoodScoreBreakdown;
+use state::WispwoodState;
 
 pub struct Wispwood;
 impl Game for Wispwood {

@@ -2,11 +2,10 @@ use std::collections::HashSet;
 
 use serde::{Deserialize, Serialize};
 
-use crate::core::{PlayerScore, Score, ScoreInto, Validate};
 use crate::games::boards::Coordinates;
 
 use super::super::boards::Board2D;
-use super::score::{WispwoodBoardScore, WispwoodScoringCards};
+use super::score::WispwoodScoringCards;
 
 #[derive(Clone, Copy, PartialEq, Eq, Hash, Default, Serialize, Deserialize)]
 pub enum WispwoodTile {
@@ -101,19 +100,8 @@ impl WispwoodBoard {
 }
 
 #[derive(Clone, Serialize, Deserialize)]
-struct WispwoodPlayerScore {
-    rounds: [WispwoodBoardScore; 3],
-}
-
-impl WispwoodPlayerScore {
-    pub fn total(&self) -> u16 {
-        self.rounds.iter().map(|round| round.total).sum()
-    }
-}
-
-#[derive(Clone, Serialize, Deserialize)]
-struct WispwoodPlayer {
-    rounds: [WispwoodBoard; 3],
+pub struct WispwoodPlayer {
+    pub rounds: [WispwoodBoard; 3],
 }
 
 impl Default for WispwoodPlayer {
@@ -128,46 +116,10 @@ impl Default for WispwoodPlayer {
     }
 }
 
-impl WispwoodPlayer {
-    pub fn score(&self, scoring_cards: &WispwoodScoringCards) -> WispwoodPlayerScore {
-        let [b0, b1, b2] = &self.rounds;
-        WispwoodPlayerScore {
-            rounds: [
-                scoring_cards.score(b0),
-                scoring_cards.score(b1),
-                scoring_cards.score(b2),
-            ],
-        }
-    }
-}
-
-#[derive(Clone, Serialize, Deserialize)]
-pub struct WispwoodScoreBreakdown {
-    players: Vec<WispwoodPlayerScore>,
-}
-
-impl ScoreInto<Score> for WispwoodScoreBreakdown {
-    fn score(&self) -> Score {
-        let scores = self.players.iter().map(|player| player.total()).into_iter();
-        let max = scores.clone().max().expect("Should have 1+ players");
-        let scores = scores
-            .clone()
-            .map(|score| PlayerScore::new(score as i16, score == max))
-            .collect();
-        Score { scores }
-    }
-}
-
-impl Validate for WispwoodScoreBreakdown {
-    fn validate(&self) -> Result<(), String> {
-        todo!()
-    }
-}
-
 #[derive(Clone, Serialize, Deserialize)]
 pub struct WispwoodState {
-    players: Vec<WispwoodPlayer>,
-    scoring_cards: WispwoodScoringCards,
+    pub players: Vec<WispwoodPlayer>,
+    pub scoring_cards: WispwoodScoringCards,
 }
 
 impl WispwoodState {
@@ -180,22 +132,5 @@ impl WispwoodState {
             players,
             scoring_cards: WispwoodScoringCards::default(),
         }
-    }
-}
-
-impl ScoreInto<WispwoodScoreBreakdown> for WispwoodState {
-    fn score(&self) -> WispwoodScoreBreakdown {
-        let players = self
-            .players
-            .iter()
-            .map(|player| player.score(&self.scoring_cards))
-            .collect();
-        WispwoodScoreBreakdown { players }
-    }
-}
-
-impl Validate for WispwoodState {
-    fn validate(&self) -> Result<(), String> {
-        todo!()
     }
 }
