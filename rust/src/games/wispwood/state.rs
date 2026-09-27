@@ -2,10 +2,8 @@ use std::collections::HashSet;
 
 use serde::{Deserialize, Serialize};
 
-use crate::games::boards::Coordinates;
-
-use super::super::boards::Board2D;
 use super::score::WispwoodScoringCards;
+use crate::boards::{Board2D, Coordinates};
 
 #[derive(Clone, Copy, PartialEq, Eq, Hash, Default, Serialize, Deserialize)]
 pub enum WispwoodTile {

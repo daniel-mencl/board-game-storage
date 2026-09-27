@@ -3,7 +3,7 @@ use std::collections::HashSet;
 use enum_dispatch::enum_dispatch;
 use serde::{Deserialize, Serialize};
 
-use crate::games::boards::Coordinates;
+use crate::boards::Coordinates;
 
 use super::{WispwoodBoard, WispwoodScoringCard};
 

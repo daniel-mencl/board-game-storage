@@ -6,8 +6,8 @@ mod scoring_cards;
 mod trees;
 mod witches;
 
-use super::super::boards::Coordinates;
 use super::state::{WispwoodBoard, WispwoodPlayer, WispwoodState, WispwoodTile};
+use crate::boards::Coordinates;
 use hearts::WispwoodHeartScoringCard;
 use jacks::WispwoodJackScoringCard;
 use orbs::WispwoodOrbScoringCard;
