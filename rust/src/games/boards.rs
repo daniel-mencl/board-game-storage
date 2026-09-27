@@ -1,5 +1,8 @@
 use serde::{Deserialize, Serialize};
-use std::collections::{HashSet, VecDeque};
+use std::{
+    collections::{HashSet, VecDeque},
+    hash::Hash,
+};
 
 #[derive(PartialEq, Eq, Hash, Clone, Copy)]
 pub struct Coordinates {
@@ -58,6 +61,16 @@ impl<T: Clone + Default> Board2D<T> {
     }
 }
 
+impl<T: Clone + Eq + Hash> Board2D<T> {
+    pub fn tile_types(&self, coords: impl IntoIterator<Item = Coordinates>) -> HashSet<T> {
+        coords
+            .into_iter()
+            .filter_map(|coord| self.get(coord))
+            .cloned()
+            .collect()
+    }
+}
+
 impl<T> Board2D<T> {
     const ORTHOGONAL_OFFSETS: [(isize, isize); 4] = [(0, 1), (0, -1), (1, 0), (-1, 0)];
 
@@ -80,10 +93,6 @@ impl<T> Board2D<T> {
                 col: index % self.size,
             })
         }
-    }
-
-    fn all_indices(&self) -> Vec<usize> {
-        (0..self.tiles.len()).collect()
     }
 
     fn all_coordinates(&self) -> Vec<Coordinates> {
@@ -253,6 +262,35 @@ impl<T> Board2D<T> {
         Self::ORTHOGONAL_OFFSETS
             .into_iter()
             .map(|offset| self.line(coord, offset))
+            .collect()
+    }
+
+    pub fn rows(&self) -> Vec<Vec<Coordinates>> {
+        (0..self.size)
+            .into_iter()
+            .map(|row| self.row(row))
+            .collect()
+    }
+
+    pub fn cols(&self) -> Vec<Vec<Coordinates>> {
+        (0..self.size)
+            .into_iter()
+            .map(|col| self.col(col))
+            .collect()
+    }
+
+    pub fn diagonals(&self) -> Vec<Vec<Coordinates>> {
+        let size = self.size as isize;
+        ((-size + 1)..size)
+            .into_iter()
+            .map(|diagonal| self.diagonal(diagonal))
+            .collect()
+    }
+
+    pub fn antidiagonals(&self) -> Vec<Vec<Coordinates>> {
+        (0..=(2 * self.size - 2))
+            .into_iter()
+            .map(|antidiagonal| self.antidiagonal(antidiagonal))
             .collect()
     }
 }

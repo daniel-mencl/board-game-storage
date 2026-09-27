@@ -21,11 +21,15 @@ impl Default for WispwoodJackScoringCard {
     }
 }
 
+fn get_jacks(board: &WispwoodBoard) -> Vec<Coordinates> {
+    board.as_ref().tile_coordinates(|tile| tile.is_jack())
+}
+
 fn count_scoring_jacks(
     board: &WispwoodBoard,
     collision_function: impl Fn(&Coordinates, &Coordinates) -> bool,
 ) -> u16 {
-    let jacks = board.tile_locations(|tile| tile.is_jack());
+    let jacks = get_jacks(board);
     let mut scoring_jacks = 0;
 
     for (index, jack) in jacks.iter().enumerate() {
@@ -113,11 +117,16 @@ impl WispwoodScoringCard for WispwoodJackDiagonal {
 pub struct WispwoodJackPairs;
 impl WispwoodScoringCard for WispwoodJackPairs {
     fn score(&self, board: &WispwoodBoard) -> u16 {
-        let jacks = board.tile_locations(|tile| tile.is_jack());
+        let jacks = get_jacks(board);
         let jack_groups = board.groups(jacks);
         let scoring_groups = jack_groups
             .into_iter()
-            .filter(|group| board.count_tiles(group.iter().copied(), |tile| tile.is_jack()) == 2)
+            .filter(|group| {
+                board
+                    .as_ref()
+                    .count_tiles(group.iter().copied(), |tile| tile.is_jack())
+                    == 2
+            })
             .count() as u16;
 
         match scoring_groups {
@@ -132,11 +141,16 @@ impl WispwoodScoringCard for WispwoodJackPairs {
 pub struct WispwoodJackGroups;
 impl WispwoodScoringCard for WispwoodJackGroups {
     fn score(&self, board: &WispwoodBoard) -> u16 {
-        let wisps = board.tile_locations(|tile| tile.is_wisp());
+        let wisps = board.wisps();
         let groups = board.groups(wisps);
         let scoring_groups = groups
             .into_iter()
-            .filter(|group| board.count_tiles(group.iter().copied(), |tile| tile.is_jack()) >= 1)
+            .filter(|group| {
+                board
+                    .as_ref()
+                    .count_tiles(group.iter().copied(), |tile| tile.is_jack())
+                    >= 1
+            })
             .count() as u16;
 
         match scoring_groups {

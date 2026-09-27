@@ -4,7 +4,6 @@ use serde::{Deserialize, Serialize};
 use super::hearts::*;
 use super::jacks::*;
 use super::orbs::*;
-use super::trees::*;
 
 use super::{
     WispwoodBoard, WispwoodHeartScoringCard, WispwoodJackScoringCard, WispwoodOrbScoringCard,
@@ -38,7 +37,7 @@ pub struct WispwoodScoringCards {
 
 impl WispwoodScoringCards {
     fn round_bonus(board: &WispwoodBoard) -> u16 {
-        let empty = board.count_all_tiles(|tile| tile.is_empty());
+        let empty = board.as_ref().count_all_tiles(|tile| tile.is_empty());
         if empty == 0 {
             0
         } else {

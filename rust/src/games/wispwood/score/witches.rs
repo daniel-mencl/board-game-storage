@@ -35,7 +35,7 @@ pub struct WispwoodWitchRowColumn;
 pub struct WispwoodWitchFar;
 
 fn score_witches(board: &WispwoodBoard) -> u16 {
-    let witches = board.count_all_tiles(|tile| tile.is_witch());
+    let witches = board.as_ref().count_all_tiles(|tile| tile.is_witch());
     let triples = witches / 3;
     let leftover = match witches % 3 {
         0 => 0,

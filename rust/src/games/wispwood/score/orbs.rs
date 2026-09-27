@@ -21,11 +21,15 @@ impl Default for WispwoodOrbScoringCard {
     }
 }
 
+fn get_orbs(board: &WispwoodBoard) -> Vec<Coordinates> {
+    board.as_ref().tile_coordinates(|tile| tile.is_orb())
+}
+
 #[derive(Clone, Serialize, Deserialize)]
 pub struct WispwoodOrbGroups;
 impl WispwoodScoringCard for WispwoodOrbGroups {
     fn score(&self, board: &WispwoodBoard) -> u16 {
-        let wisps = board.tile_locations(|tile| tile.is_wisp());
+        let wisps = board.wisps();
         let groups = board.groups(wisps);
         2 * groups
             .into_iter()
@@ -40,10 +44,10 @@ impl WispwoodScoringCard for WispwoodOrbGroups {
 pub struct WispwoodOrbAround;
 impl WispwoodScoringCard for WispwoodOrbAround {
     fn score(&self, board: &WispwoodBoard) -> u16 {
-        let orbs = board.tile_locations(|tile| tile.is_orb());
+        let orbs = get_orbs(board);
         2 * orbs
             .into_iter()
-            .map(|coord| board.surrounding(&coord))
+            .map(|coord| board.as_ref().diagonal_neighbors(&coord))
             .map(|coords| board.wisp_types(coords))
             .filter(|wisp_types| wisp_types.iter().any(|tile| tile.is_orb()))
             .map(|wisp_types| wisp_types.len())
@@ -74,9 +78,9 @@ impl WispwoodOrbAdjacent {
 }
 impl WispwoodScoringCard for WispwoodOrbAdjacent {
     fn score(&self, board: &WispwoodBoard) -> u16 {
-        let orbs = board.tile_locations(|tile| tile.is_orb());
+        let orbs = get_orbs(board);
         orbs.into_iter()
-            .map(|coord| board.neighbors(&coord))
+            .map(|coord| board.as_ref().orthogonal_neighbors(&coord))
             .map(|neighbors| board.wisp_types(neighbors))
             .map(|wisp_types| Self::score_lowest_value_wisp(wisp_types))
             .sum()
@@ -87,10 +91,10 @@ impl WispwoodScoringCard for WispwoodOrbAdjacent {
 pub struct WispwoodOrbLeast;
 impl WispwoodScoringCard for WispwoodOrbLeast {
     fn score(&self, board: &WispwoodBoard) -> u16 {
-        let orbs = board.count_all_tiles(|tile| tile.is_orb());
-        let jacks = board.count_all_tiles(|tile| tile.is_jack());
-        let witches = board.count_all_tiles(|tile| tile.is_witch());
-        let hearts = board.count_all_tiles(|tile| tile.is_heart());
+        let orbs = board.as_ref().count_all_tiles(|tile| tile.is_orb());
+        let jacks = board.as_ref().count_all_tiles(|tile| tile.is_jack());
+        let witches = board.as_ref().count_all_tiles(|tile| tile.is_witch());
+        let hearts = board.as_ref().count_all_tiles(|tile| tile.is_heart());
 
         let least = [orbs, jacks, witches, hearts]
             .iter()
@@ -115,9 +119,9 @@ impl WispwoodScoringCard for WispwoodOrbLeast {
 pub struct WispwoodOrbRowColumn;
 impl WispwoodOrbRowColumn {
     fn wisp_count_row_or_column(board: &WispwoodBoard, coord: Coordinates) -> usize {
-        let row = board.row(coord.row);
+        let row = board.as_ref().row(coord.row);
         let row_wisps = board.wisp_types(row).len();
-        let col = board.col(coord.col);
+        let col = board.as_ref().col(coord.col);
         let col_wisps = board.wisp_types(col).len();
 
         max(row_wisps, col_wisps)
@@ -125,7 +129,7 @@ impl WispwoodOrbRowColumn {
 }
 impl WispwoodScoringCard for WispwoodOrbRowColumn {
     fn score(&self, board: &WispwoodBoard) -> u16 {
-        let orbs = board.tile_locations(|tile| tile.is_orb());
+        let orbs = get_orbs(board);
         2 * orbs
             .into_iter()
             .map(|coord| Self::wisp_count_row_or_column(board, coord))
@@ -135,8 +139,56 @@ impl WispwoodScoringCard for WispwoodOrbRowColumn {
 
 #[derive(Clone, Serialize, Deserialize)]
 pub struct WispwoodOrbCorner;
+
+impl WispwoodOrbCorner {
+    fn only_corner_touch_wisp_types(
+        board: &WispwoodBoard,
+        orb: Coordinates,
+        group: &HashSet<Coordinates>,
+    ) -> Option<usize> {
+        let mut wisp_types: HashSet<WispwoodTile> = HashSet::new();
+        let mut corner_touch = false;
+        for coord in group {
+            if Coordinates::orthogonally_adjacent(&orb, coord) {
+                return None;
+            }
+
+            if Coordinates::diagonally_adjacent(&orb, coord) {
+                corner_touch = true;
+            }
+
+            let wisp = board.as_ref().get(*coord)?;
+            wisp_types.insert(*wisp);
+        }
+
+        if corner_touch {
+            Some(wisp_types.len())
+        } else {
+            None
+        }
+    }
+
+    fn best_only_corner_touch_wisp_types(
+        board: &WispwoodBoard,
+        orb: Coordinates,
+        groups: &Vec<HashSet<Coordinates>>,
+    ) -> usize {
+        groups
+            .iter()
+            .filter_map(|group| Self::only_corner_touch_wisp_types(board, orb, group))
+            .max()
+            .unwrap_or(0)
+    }
+}
+
 impl WispwoodScoringCard for WispwoodOrbCorner {
     fn score(&self, board: &WispwoodBoard) -> u16 {
-        todo!()
+        let orbs = get_orbs(board);
+        let groups = board.groups(board.wisps());
+
+        2 * orbs
+            .into_iter()
+            .map(|orb| Self::best_only_corner_touch_wisp_types(board, orb, &groups))
+            .sum::<usize>() as u16
     }
 }
