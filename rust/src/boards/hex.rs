@@ -1,6 +1,7 @@
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet, VecDeque};
 use std::hash::Hash;
+use std::ops::Add;
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Eq, Hash, Copy)]
 pub struct HexCoordinates {
@@ -22,28 +23,48 @@ impl HexCoordinates {
     fn s(&self) -> i8 {
         -self.q - self.r
     }
+
+    const CLOCKWISE_OFFSETS: [HexCoordinates; 6] = [
+        HexCoordinates { q: 1, r: -1 },
+        HexCoordinates { q: 1, r: 0 },
+        HexCoordinates { q: 0, r: 1 },
+        HexCoordinates { q: -1, r: 1 },
+        HexCoordinates { q: -1, r: 0 },
+        HexCoordinates { q: 0, r: -1 },
+    ];
 }
 
-pub struct WeightedEdge<T> {
+impl Add for HexCoordinates {
+    type Output = Self;
+    fn add(self, rhs: Self) -> Self::Output {
+        Self {
+            q: self.q + rhs.q,
+            r: self.r + rhs.r,
+        }
+    }
+}
+
+#[derive(Clone, Copy, PartialEq, Eq, Hash)]
+pub struct Edge<T, W = ()> {
     node: T,
-    weight: i64,
+    weight: W,
 }
-impl<T> WeightedEdge<T> {
-    pub fn new_unweighted(node: T) -> WeightedEdge<T> {
-        WeightedEdge { node, weight: 0 }
-    }
-
-    pub fn new(node: T, weight: i64) -> WeightedEdge<T> {
-        WeightedEdge { node, weight }
+impl<T> Edge<T> {
+    pub fn unweighted(node: T) -> Self {
+        Self { node, weight: () }
     }
 }
+impl<T, W> Edge<T, W> {
+    pub fn weighted(node: T, weight: W) -> Self {
+        Self { node, weight }
+    }
+}
 
-pub struct WeightedGraph<T: Hash + Eq> {
+pub struct Graph<T: Hash + Eq, W = ()> {
     // every node should have an entry, even if it is an empty vec
-    // undirected graph
-    edges: HashMap<T, Vec<WeightedEdge<T>>>,
+    edges: HashMap<T, Vec<Edge<T, W>>>,
 }
-impl<T: Hash + Eq + Clone> WeightedGraph<T> {
+impl<T: Hash + Eq + Clone, W> Graph<T, W> {
     fn components(&self) -> Vec<HashSet<T>> {
         let mut result = Vec::new();
         let mut unseen: HashSet<T> = self.edges.keys().cloned().collect();
@@ -79,27 +100,52 @@ pub struct HexBoard<T> {
 }
 
 impl<T> HexBoard<T> {
-    pub fn to_graph(
+    pub fn to_graph<W>(
         &self,
         node_predicate: impl Fn(&HexCoordinates, &T) -> bool,
-        neighbor_function: impl Fn(&HexCoordinates, &T) -> Vec<(HexCoordinates, T)>,
-        weight_function: impl Fn(&HexCoordinates, &T) -> i64,
-    ) -> WeightedGraph<HexCoordinates> {
-        let nodes: Vec<_> = self
+        neighbor_function: impl Fn(&HexBoard<T>, &HexCoordinates, &T) -> Vec<(HexCoordinates, W)>,
+    ) -> Graph<HexCoordinates, W> {
+        let active_nodes: HashMap<_, _> = self
             .tiles
             .iter()
-            .filter(|(coord, tile)| node_predicate(*coord, *tile))
+            .filter(|(coord, val)| node_predicate(coord, val))
             .collect();
+
         let mut edges = HashMap::new();
 
-        for (coord, tile) in nodes {
-            let node_edges = neighbor_function(coord, tile)
-                .iter()
-                .map(|(coord, tile)| WeightedEdge::new(*coord, weight_function(coord, tile)))
+        for (&coord, &val) in active_nodes.iter() {
+            let current_edges = neighbor_function(&self, coord, val)
+                .into_iter()
+                .filter(|(coord, _)| active_nodes.contains_key(coord))
+                .map(|(coord, weight)| Edge::weighted(coord, weight))
                 .collect();
-            edges.insert(*coord, node_edges);
+
+            edges.insert(*coord, current_edges);
         }
 
-        WeightedGraph { edges }
+        Graph { edges }
+    }
+
+    pub fn to_unweighted_graph(
+        &self,
+        node_predicate: impl Fn(&HexCoordinates, &T) -> bool,
+        neighbor_function: impl Fn(&HexBoard<T>, &HexCoordinates, &T) -> Vec<HexCoordinates>,
+    ) -> Graph<HexCoordinates> {
+        fn add_unit_weight(coords: Vec<HexCoordinates>) -> Vec<(HexCoordinates, ())> {
+            coords.into_iter().map(|coord| (coord, ())).collect()
+        }
+
+        self.to_graph(node_predicate, |board, coord, t| {
+            add_unit_weight(neighbor_function(board, coord, t))
+        })
+    }
+
+    pub fn neighbors(&self, center: HexCoordinates, _tile: &T) -> Vec<HexCoordinates> {
+        HexCoordinates::CLOCKWISE_OFFSETS
+            .iter()
+            .copied()
+            .map(|coord| center + coord)
+            .filter(|coord| self.tiles.contains_key(coord))
+            .collect()
     }
 }
