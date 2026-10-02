@@ -14,5 +14,5 @@ use hawk::CascadiaHawkScoringCard;
 use salmon::CascadiaSalmonScoringCard;
 use scoring_cards::CascadiaScoringCard;
 
-pub use score::CascadiaScoreBreakdown;
+pub use score::{CascadiaScoreBreakdown, map_count_to_points};
 pub use scoring_cards::{CascadiaAnimalScore, CascadiaScoringCards};

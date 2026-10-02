@@ -12,19 +12,7 @@ pub struct HexCoordinates {
 }
 
 impl HexCoordinates {
-    fn q(&self) -> i8 {
-        self.q
-    }
-
-    fn r(&self) -> i8 {
-        self.r
-    }
-
-    fn s(&self) -> i8 {
-        -self.q - self.r
-    }
-
-    const CLOCKWISE_OFFSETS: [HexCoordinates; 6] = [
+    pub const CLOCKWISE_OFFSETS: [HexCoordinates; 6] = [
         HexCoordinates { q: 1, r: -1 },
         HexCoordinates { q: 1, r: 0 },
         HexCoordinates { q: 0, r: 1 },
@@ -49,11 +37,6 @@ pub struct Edge<T, W = ()> {
     node: T,
     weight: W,
 }
-impl<T> Edge<T> {
-    pub fn unweighted(node: T) -> Self {
-        Self { node, weight: () }
-    }
-}
 impl<T, W> Edge<T, W> {
     pub fn weighted(node: T, weight: W) -> Self {
         Self { node, weight }
@@ -65,7 +48,7 @@ pub struct Graph<T: Hash + Eq, W = ()> {
     edges: HashMap<T, Vec<Edge<T, W>>>,
 }
 impl<T: Hash + Eq + Clone, W> Graph<T, W> {
-    fn components(&self) -> Vec<HashSet<T>> {
+    pub fn components(&self) -> Vec<HashSet<T>> {
         let mut result = Vec::new();
         let mut unseen: HashSet<T> = self.edges.keys().cloned().collect();
 
@@ -100,21 +83,26 @@ pub struct HexBoard<T> {
 }
 
 impl<T> HexBoard<T> {
+    pub fn new(tiles: impl IntoIterator<Item = (HexCoordinates, T)>) -> Self {
+        let tiles = tiles.into_iter().collect();
+        Self { tiles }
+    }
+
     pub fn to_graph<W>(
         &self,
-        node_predicate: impl Fn(&HexCoordinates, &T) -> bool,
-        neighbor_function: impl Fn(&HexBoard<T>, &HexCoordinates, &T) -> Vec<(HexCoordinates, W)>,
+        node_predicate: impl Fn(HexCoordinates, &T) -> bool,
+        neighbor_function: impl Fn(HexCoordinates, &T) -> Vec<(HexCoordinates, W)>,
     ) -> Graph<HexCoordinates, W> {
         let active_nodes: HashMap<_, _> = self
             .tiles
             .iter()
-            .filter(|(coord, val)| node_predicate(coord, val))
+            .filter(|(coord, val)| node_predicate(**coord, val))
             .collect();
 
         let mut edges = HashMap::new();
 
         for (&coord, &val) in active_nodes.iter() {
-            let current_edges = neighbor_function(&self, coord, val)
+            let current_edges = neighbor_function(*coord, val)
                 .into_iter()
                 .filter(|(coord, _)| active_nodes.contains_key(coord))
                 .map(|(coord, weight)| Edge::weighted(coord, weight))
@@ -128,24 +116,49 @@ impl<T> HexBoard<T> {
 
     pub fn to_unweighted_graph(
         &self,
-        node_predicate: impl Fn(&HexCoordinates, &T) -> bool,
-        neighbor_function: impl Fn(&HexBoard<T>, &HexCoordinates, &T) -> Vec<HexCoordinates>,
+        node_predicate: impl Fn(HexCoordinates, &T) -> bool,
+        neighbor_function: impl Fn(HexCoordinates, &T) -> Vec<HexCoordinates>,
     ) -> Graph<HexCoordinates> {
         fn add_unit_weight(coords: Vec<HexCoordinates>) -> Vec<(HexCoordinates, ())> {
             coords.into_iter().map(|coord| (coord, ())).collect()
         }
 
-        self.to_graph(node_predicate, |board, coord, t| {
-            add_unit_weight(neighbor_function(board, coord, t))
+        self.to_graph(node_predicate, |coord, t| {
+            add_unit_weight(neighbor_function(coord, t))
         })
     }
 
-    pub fn neighbors(&self, center: HexCoordinates, _tile: &T) -> Vec<HexCoordinates> {
+    pub fn neighbors(&self, center: HexCoordinates) -> Vec<HexCoordinates> {
         HexCoordinates::CLOCKWISE_OFFSETS
             .iter()
             .copied()
             .map(|coord| center + coord)
             .filter(|coord| self.tiles.contains_key(coord))
             .collect()
+    }
+
+    pub fn all_neighbors(
+        &self,
+        coords: &[HexCoordinates],
+    ) -> impl IntoIterator<Item = HexCoordinates> {
+        let mut result = HashSet::new();
+
+        for coord in coords {
+            for other in self.neighbors(*coord) {
+                result.insert(other);
+            }
+        }
+
+        for coord in coords {
+            result.remove(coord);
+        }
+
+        result
+    }
+}
+
+impl<T> AsRef<HashMap<HexCoordinates, T>> for HexBoard<T> {
+    fn as_ref(&self) -> &HashMap<HexCoordinates, T> {
+        &self.tiles
     }
 }

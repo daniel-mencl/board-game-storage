@@ -1,8 +1,6 @@
-use std::collections::HashMap;
-
 use super::{CascadiaAnimalScore, CascadiaBoard, CascadiaHabitat, CascadiaState};
 use crate::{
-    boards::HexBoard,
+    boards::{HexBoard, HexCoordinates},
     core::{Score, ScoreInto},
 };
 use serde::{Deserialize, Serialize};
@@ -102,8 +100,44 @@ impl CascadiaHabitatScore {
     }
 }
 
+fn opposite_index(index: usize) -> usize {
+    if index >= 3 { index - 3 } else { index + 3 }
+}
+
+fn habitat_neighbors(
+    board: &HexBoard<[CascadiaHabitat; 6]>,
+    coord: HexCoordinates,
+    habitats: &[CascadiaHabitat; 6],
+    habitat: CascadiaHabitat,
+) -> Vec<HexCoordinates> {
+    let mut result = Vec::new();
+
+    for (index, &direction) in HexCoordinates::CLOCKWISE_OFFSETS.iter().enumerate() {
+        if habitats[index] != habitat {
+            continue;
+        }
+
+        if let Some(other) = board.as_ref().get(&(coord + direction)) {
+            if other[opposite_index(index)] == habitat {
+                result.push(coord + direction);
+            }
+        }
+    }
+
+    result
+}
+
 fn score_habitat(board: &HexBoard<[CascadiaHabitat; 6]>, habitat: CascadiaHabitat) -> u16 {
-    todo!()
+    board
+        .to_unweighted_graph(
+            |_, tile| tile.contains(&habitat),
+            |coord, tile| habitat_neighbors(board, coord, tile, habitat),
+        )
+        .components()
+        .into_iter()
+        .map(|component| component.len())
+        .max()
+        .unwrap_or(0) as u16
 }
 
 fn score_habitats(board: &CascadiaBoard) -> CascadiaRawHabitatScore {
@@ -137,7 +171,7 @@ fn calculate_habitat_bonus(sizes: Vec<u16>) -> Vec<CascadiaSoloHabitatScore> {
 
     let highest_count = sizes.iter().filter(|x| *x == highest).count();
     let second_highest_count = match second_highest {
-        Some(value) => sizes.iter().filter(|x| *x == highest).count(),
+        Some(value) => sizes.iter().filter(|x| *x == value).count(),
         None => 0,
     };
 
@@ -228,5 +262,19 @@ impl ScoreInto<CascadiaScoreBreakdown> for CascadiaState {
             .collect();
 
         CascadiaScoreBreakdown { players }
+    }
+}
+
+pub fn map_count_to_points(count: usize, lowest: usize, points: &[u16], zero_past: bool) -> u16 {
+    // index 0 -> points for count = 0 + lowest, index 1 -> points for count = 1 + lowest
+    // past the vec end -> 0 if zero_past else max
+    if count < lowest {
+        0
+    } else if count - lowest < points.len() {
+        points[count - lowest]
+    } else if zero_past {
+        0
+    } else {
+        *points.last().unwrap()
     }
 }
