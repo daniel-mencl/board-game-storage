@@ -28,6 +28,10 @@ impl HexCoordinates {
     pub fn distance(a: HexCoordinates, b: HexCoordinates) -> u8 {
         Self::diff_size(b - a)
     }
+
+    pub fn opposite_index(index: usize) -> usize {
+        if index >= 3 { index - 3 } else { index + 3 }
+    }
 }
 
 impl Add for HexCoordinates {
