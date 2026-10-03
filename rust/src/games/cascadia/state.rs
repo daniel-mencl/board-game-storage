@@ -11,7 +11,7 @@ pub enum CascadiaAnimal {
     Fox,
 }
 
-#[derive(Clone, Serialize, Deserialize, PartialEq, Eq, Copy)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Eq, Copy, Hash)]
 pub enum CascadiaHabitat {
     River,
     Wetland,

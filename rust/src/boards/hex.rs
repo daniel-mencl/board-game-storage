@@ -1,14 +1,14 @@
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet, VecDeque};
 use std::hash::Hash;
-use std::ops::Add;
+use std::ops::{Add, Mul, Sub};
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Eq, Hash, Copy)]
 pub struct HexCoordinates {
     // https://www.redblobgames.com/grids/hexagons/#neighbors-axial
     // axial, pointy variant
-    q: i8,
-    r: i8,
+    pub q: i8,
+    pub r: i8,
 }
 
 impl HexCoordinates {
@@ -20,6 +20,14 @@ impl HexCoordinates {
         HexCoordinates { q: -1, r: 0 },
         HexCoordinates { q: 0, r: -1 },
     ];
+
+    pub fn diff_size(diff: HexCoordinates) -> u8 {
+        (diff.q.abs() as u8 + (diff.q + diff.r).abs() as u8 + diff.r.abs() as u8) / 2
+    }
+
+    pub fn distance(a: HexCoordinates, b: HexCoordinates) -> u8 {
+        Self::diff_size(b - a)
+    }
 }
 
 impl Add for HexCoordinates {
@@ -29,6 +37,33 @@ impl Add for HexCoordinates {
             q: self.q + rhs.q,
             r: self.r + rhs.r,
         }
+    }
+}
+
+impl Sub for HexCoordinates {
+    type Output = Self;
+    fn sub(self, rhs: Self) -> Self::Output {
+        Self {
+            q: self.q - rhs.q,
+            r: self.r - rhs.r,
+        }
+    }
+}
+
+impl Mul<i8> for HexCoordinates {
+    type Output = Self;
+    fn mul(self, rhs: i8) -> Self::Output {
+        Self {
+            r: self.r * rhs,
+            q: self.q * rhs,
+        }
+    }
+}
+
+impl Mul<u8> for HexCoordinates {
+    type Output = Self;
+    fn mul(self, rhs: u8) -> Self::Output {
+        self * (rhs as i8)
     }
 }
 
@@ -74,6 +109,12 @@ impl<T: Hash + Eq + Clone, W> Graph<T, W> {
         }
 
         result
+    }
+}
+
+impl<T: Hash + Eq, W> Graph<T, W> {
+    pub fn max_weight_matching(&self) -> W {
+        todo!()
     }
 }
 

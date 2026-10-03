@@ -3,7 +3,7 @@ mod state;
 mod validation;
 
 use scoring::CascadiaScoreBreakdown;
-use state::{CascadiaAnimal, CascadiaBoard, CascadiaHabitat, CascadiaState};
+use state::{CascadiaAnimal, CascadiaBoard, CascadiaHabitat, CascadiaState, CascadiaTile};
 
 use crate::core::Game;
 

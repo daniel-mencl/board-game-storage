@@ -6,7 +6,7 @@ mod salmon;
 mod score;
 mod scoring_cards;
 
-use super::{CascadiaAnimal, CascadiaBoard, CascadiaHabitat, CascadiaState};
+use super::{CascadiaAnimal, CascadiaBoard, CascadiaHabitat, CascadiaState, CascadiaTile};
 use bear::CascadiaBearScoringCard;
 use elk::CascadiaElkScoringCard;
 use fox::CascadiaFoxScoringCard;
