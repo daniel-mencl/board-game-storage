@@ -3,7 +3,7 @@ use std::collections::{HashMap, HashSet, VecDeque};
 use std::hash::Hash;
 use std::ops::{Add, Mul, Sub};
 
-#[derive(Clone, Serialize, Deserialize, PartialEq, Eq, Hash, Copy)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Eq, Hash, Copy, PartialOrd, Ord)]
 pub struct HexCoordinates {
     // https://www.redblobgames.com/grids/hexagons/#neighbors-axial
     // axial, pointy variant

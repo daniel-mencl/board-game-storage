@@ -47,14 +47,66 @@ fn basic_elk_group_score(size: usize) -> u16 {
 }
 
 fn formations(elk: &HashSet<HexCoordinates>) -> Vec<ScoredShape> {
-    todo!()
+    // start with single elk, go in main directions (add third elk below - next clockwise offset)
+    let mut result = Vec::new();
+
+    for &e in elk {
+        result.push((HashSet::from([e]), basic_elk_group_score(1)));
+
+        for direction_index in 0usize..3 {
+            let mut current_shape = HashSet::from([e]);
+
+            let second_offset = HexCoordinates::CLOCKWISE_OFFSETS[direction_index];
+            let third_offset = HexCoordinates::CLOCKWISE_OFFSETS[direction_index + 1];
+            let fourth_offset = second_offset + third_offset;
+
+            for offset in [second_offset, third_offset, fourth_offset] {
+                let other_elk = e + offset;
+                if !elk.contains(&other_elk) {
+                    break;
+                }
+                current_shape.insert(other_elk);
+                result.push((
+                    current_shape.clone(),
+                    basic_elk_group_score(current_shape.len()),
+                ));
+            }
+        }
+    }
+
+    result
 }
 
 #[derive(Clone, Serialize, Deserialize)]
 pub struct CascadiaElkA;
 impl CascadiaElkA {
     fn lines(elk: &HashSet<HexCoordinates>) -> Vec<ScoredShape> {
-        todo!()
+        // make lines starting with elk but only in three directions - that way, the "start" is unique
+        let mut result = Vec::new();
+        let main_directions = &HexCoordinates::CLOCKWISE_OFFSETS[0..3];
+
+        for &e in elk {
+            result.push((HashSet::from([e]), basic_elk_group_score(1)));
+
+            for &direction in main_directions {
+                let mut current_shape = HashSet::from([e]);
+
+                for distance in 1u8..=3 {
+                    let current = e + direction * distance;
+                    if !elk.contains(&current) {
+                        break;
+                    }
+
+                    current_shape.insert(current);
+                    result.push((
+                        current_shape.clone(),
+                        basic_elk_group_score(current_shape.len()),
+                    ));
+                }
+            }
+        }
+
+        result
     }
 }
 impl CascadiaScoringCard for CascadiaElkA {
@@ -109,7 +161,41 @@ impl CascadiaElkD {
     }
 
     fn circles(elk: &HashSet<HexCoordinates>) -> Vec<ScoredShape> {
-        todo!()
+        // each elk continues the circle clockwise
+        let mut result = Vec::new();
+        let mut seen = HashSet::new();
+
+        for &e in elk {
+            seen.insert(vec![e]);
+            result.push((HashSet::from([e]), Self::points(1)));
+
+            for direction_index in 0..6 {
+                let center = e + HexCoordinates::CLOCKWISE_OFFSETS[direction_index];
+                let elk_offset_index = HexCoordinates::opposite_index(direction_index);
+
+                let mut current_shape = HashSet::from([e]);
+
+                for step in 1..6 {
+                    let next_offset_index = (elk_offset_index + step) % 6;
+                    let next_coord = center + HexCoordinates::CLOCKWISE_OFFSETS[next_offset_index];
+
+                    if !elk.contains(&next_coord) {
+                        break;
+                    }
+
+                    current_shape.insert(next_coord);
+
+                    let mut key: Vec<_> = current_shape.iter().copied().collect();
+                    key.sort_unstable();
+
+                    if seen.insert(key) {
+                        result.push((current_shape.clone(), Self::points(current_shape.len())));
+                    }
+                }
+            }
+        }
+
+        result
     }
 }
 impl CascadiaScoringCard for CascadiaElkD {
@@ -128,7 +214,31 @@ impl CascadiaElkE {
     }
 
     fn semicircles(elk: &HashSet<HexCoordinates>) -> Vec<ScoredShape> {
-        todo!()
+        let mut result = Vec::new();
+
+        for &e in elk {
+            for direction_index in 0..6 {
+                let center = e + HexCoordinates::CLOCKWISE_OFFSETS[direction_index];
+                let center_elk_offset_index = HexCoordinates::opposite_index(direction_index);
+
+                let counter_clockwise_elk = center
+                    + HexCoordinates::CLOCKWISE_OFFSETS[if center_elk_offset_index != 0 {
+                        center_elk_offset_index - 1
+                    } else {
+                        5
+                    }];
+
+                let clockwise_elk =
+                    center + HexCoordinates::CLOCKWISE_OFFSETS[(center_elk_offset_index + 1) % 6];
+
+                if elk.contains(&counter_clockwise_elk) && elk.contains(&clockwise_elk) {
+                    let current_shape = HashSet::from([e, counter_clockwise_elk, clockwise_elk]);
+                    result.push((current_shape, 1));
+                }
+            }
+        }
+
+        result
     }
 }
 impl CascadiaScoringCard for CascadiaElkE {
@@ -143,23 +253,45 @@ impl CascadiaScoringCard for CascadiaElkE {
 #[derive(Clone, Serialize, Deserialize)]
 pub struct CascadiaElkF;
 impl CascadiaElkF {
-    fn points(animals: &HexBoard<CascadiaAnimal>, elk: HashSet<HexCoordinates>) -> u16 {
-        let elk: Vec<_> = elk.into_iter().collect();
+    fn points(animals: &HexBoard<CascadiaAnimal>, elk: &[HexCoordinates]) -> u16 {
         13 - animals
-            .all_neighbors(&elk)
+            .all_neighbors(elk)
             .into_iter()
             .filter(|coord| animals.as_ref().get(coord).is_some())
             .count() as u16
     }
 
-    fn solo_herds(elk: &HashSet<HexCoordinates>) -> Vec<ScoredShape> {
-        todo!()
+    fn solo_herds(
+        animals: &HexBoard<CascadiaAnimal>,
+        elk: &HashSet<HexCoordinates>,
+    ) -> Vec<ScoredShape> {
+        let mut result = Vec::new();
+
+        for &e in elk {
+            for direction_index in 0..3 {
+                let second_elk_offset = HexCoordinates::CLOCKWISE_OFFSETS[direction_index];
+                let third_elk_offset = HexCoordinates::CLOCKWISE_OFFSETS[direction_index + 1];
+
+                let second_elk = e + second_elk_offset;
+                let third_elk = e + third_elk_offset;
+
+                if elk.contains(&second_elk) && elk.contains(&third_elk) {
+                    let current_shape = [e, second_elk, third_elk];
+                    result.push((
+                        HashSet::from(current_shape),
+                        Self::points(animals, &current_shape),
+                    ));
+                }
+            }
+        }
+
+        result
     }
 }
 impl CascadiaScoringCard for CascadiaElkF {
     fn score(&self, _board: &CascadiaBoard, animals: &HexBoard<CascadiaAnimal>) -> u16 {
         let elk = elk_positions(animals);
-        let shapes = Self::solo_herds(&elk);
+        let shapes = Self::solo_herds(animals, &elk);
         best_elk_shape_weights(&shapes)
     }
 }
