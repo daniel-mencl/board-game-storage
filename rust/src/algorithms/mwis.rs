@@ -77,7 +77,13 @@ struct MwisSolver<'a, W> {
     best_selection: Vec<usize>,
 }
 
-impl<'a, W: Copy + Default + Add<Output = W>> MwisSolver<'a, W> {
+impl<'a, W> MwisSolver<'a, W> {
+    pub fn n(&self) -> usize {
+        self.weights.len()
+    }
+}
+
+impl<'a, W: Copy + Default + Add<Output = W> + Ord> MwisSolver<'a, W> {
     pub fn new(weights: &'a [W], conflicts: &'a [Vec<bool>]) -> Self {
         let max_potential = calculate_suffix_sums(weights);
         let best_weight = W::default();
@@ -91,6 +97,12 @@ impl<'a, W: Copy + Default + Add<Output = W>> MwisSolver<'a, W> {
         }
     }
 
+    fn calculate_available(&self, index: usize, available: &Vec<bool>) -> Vec<bool> {
+        self.conflicts[index].iter().zip(available.iter()).map(|(&conflict, &avail)|
+            (!conflict) && avail
+        ).collect()
+    }
+
     pub fn solve(
         &mut self,
         current_index: usize,
@@ -98,7 +110,31 @@ impl<'a, W: Copy + Default + Add<Output = W>> MwisSolver<'a, W> {
         current_weight: W,
         current_selection: Vec<usize>,
     ) {
-        todo!()
+        if current_weight > self.best_weight {
+            self.best_weight = current_weight;
+            self.best_selection = current_selection.clone();
+        }
+
+        if current_index > self.n() {
+            return;
+        }
+
+        if current_weight + self.max_potential[current_index] <= self.best_weight {
+            return;
+        }
+
+        // include
+        if current_available[current_index] {
+            let new_index = current_index + 1;
+            let new_available = self.calculate_available(current_index, &current_available);
+            let new_weight = current_weight + self.weights[current_index];
+            let mut new_selections = current_selection.clone();
+            new_selections.push(current_index);
+            self.solve(new_index, new_available, new_weight, new_selections);
+        }
+
+        // exclude
+        self.solve(current_index + 1, current_available, current_weight, current_selection); 
     }
 
     pub fn result(&self) -> MwisResult<W> {
