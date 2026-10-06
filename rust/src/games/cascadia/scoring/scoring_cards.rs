@@ -43,6 +43,10 @@ impl CascadiaAnimalScore {
             total,
         }
     }
+
+    pub fn total(&self) -> u16 {
+        self.total
+    }
 }
 
 impl CascadiaScoringCards {

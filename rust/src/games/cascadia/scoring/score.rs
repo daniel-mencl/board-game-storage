@@ -1,7 +1,6 @@
 use super::{CascadiaAnimalScore, CascadiaBoard, CascadiaHabitat, CascadiaState};
 use crate::{
-    boards::{HexBoard, HexCoordinates},
-    core::{Score, ScoreInto},
+    boards::{HexBoard, HexCoordinates}, core::{PlayerScore, Score, ScoreInto},
 };
 use serde::{Deserialize, Serialize};
 
@@ -15,6 +14,7 @@ pub struct CascadiaPlayerScore {
     animals: CascadiaAnimalScore,
     habitats: CascadiaHabitatScore,
     nature_tokens: u16,
+    total: u16
 }
 impl CascadiaPlayerScore {
     fn new(
@@ -22,11 +22,21 @@ impl CascadiaPlayerScore {
         habitats: CascadiaHabitatScore,
         nature_tokens: u16,
     ) -> CascadiaPlayerScore {
+        let total = animals.total() + habitats.total() + nature_tokens;
         CascadiaPlayerScore {
             animals,
             habitats,
             nature_tokens,
+            total
         }
+    }
+
+    pub fn total(&self) -> u16 {
+        self.total
+    }
+
+    pub fn nature_tokens(&self) -> u16 {
+        self.nature_tokens
     }
 }
 
@@ -97,6 +107,10 @@ impl CascadiaHabitatScore {
             mountains,
             total,
         }
+    }
+
+    pub fn total(&self) -> u16 {
+        self.total
     }
 }
 
@@ -229,7 +243,10 @@ fn calculate_habitat_bonuses(habitats: Vec<CascadiaRawHabitatScore>) -> Vec<Casc
 
 impl ScoreInto<Score> for CascadiaScoreBreakdown {
     fn score(&self) -> Score {
-        todo!()
+        let max_score = self.players.iter().map(|player| player.total()).max().expect("More than zero players");
+        let max_score_max_nature = self.players.iter().filter(|player| player.total() == max_score).map(|player| player.nature_tokens()).max().expect("At least one player has max score");
+        let player_scores: Vec<_> = self.players.iter().map(|player| PlayerScore::new(player.total() as i16, player.total() == max_score && player.nature_tokens() == max_score_max_nature)).collect();
+        Score::new(player_scores)
     }
 }
 
