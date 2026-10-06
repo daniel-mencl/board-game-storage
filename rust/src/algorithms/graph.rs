@@ -52,9 +52,3 @@ impl<T: Hash + Eq + Clone, W> Graph<T, W> {
         result
     }
 }
-
-impl<T: Hash + Eq, W> Graph<T, W> {
-    pub fn max_weight_matching(&self) -> W {
-        todo!()
-    }
-}

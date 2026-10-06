@@ -68,6 +68,15 @@ where
     }
 }
 
+pub fn max_weight_matching<T, W>(edges: &[(T, T, W)]) -> MwisResult<W>
+where
+    T: Eq + Hash,
+    W: Copy + Default + Ord + Add<Output = W>
+{
+    let candidates: Vec<_> = edges.iter().map(|(a, b, w)| (HashSet::from([a, b]), *w)).collect();
+    max_weight_set_packing(&candidates)
+}
+
 struct MwisSolver<'a, W> {
     weights: &'a [W],
     conflicts: &'a [Vec<bool>],

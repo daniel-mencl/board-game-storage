@@ -1,6 +1,7 @@
 use std::collections::{HashMap, HashSet};
 
 use crate::boards::{HexBoard, HexCoordinates};
+use crate::algorithms::max_weight_matching;
 
 use super::{
     CascadiaAnimal, CascadiaBoard, CascadiaScoringCard, CascadiaTile, map_count_to_points,
@@ -173,32 +174,26 @@ impl CascadiaHawkD {
             .collect();
         Some(Self::points(animal_types_under.len()))
     }
-
-    fn los_neighbors(
-        animals: &HexBoard<CascadiaAnimal>,
-        hawks: &HashSet<HexCoordinates>,
-        hawk: HexCoordinates,
-    ) -> Vec<(HexCoordinates, u16)> {
-        let mut result = Vec::new();
-        for &other in hawks {
-            if hawk == other {
-                continue;
-            }
-            if let Some(points) = Self::evaluate_hawk_pair(animals, hawks, hawk, other) {
-                result.push((other, points));
-            }
-        }
-        result
-    }
 }
 impl CascadiaScoringCard for CascadiaHawkD {
     fn score(&self, _board: &CascadiaBoard, animals: &HexBoard<CascadiaAnimal>) -> u16 {
-        let hawks = hawk_positions(animals).into_iter().collect();
-        let graph = animals.to_graph(
-            |_, animal| *animal == CascadiaAnimal::Hawk,
-            |coord, _| Self::los_neighbors(animals, &hawks, coord),
-        );
-        graph.max_weight_matching()
+        let hawk_set: HashSet<_> = hawk_positions(animals).into_iter().collect();
+        let hawk_vec: Vec<_> = hawk_positions(animals).into_iter().collect();
+        let n = hawk_set.len();
+
+        let mut pairs: Vec<(usize, usize, u16)> = Vec::new();
+
+        for i in 0..n {
+            let hawk_a = hawk_vec[i];
+            for j in (i+1)..n {
+                let hawk_b = hawk_vec[j];
+                if let Some(points) = Self::evaluate_hawk_pair(animals, &hawk_set, hawk_a, hawk_b) {
+                    pairs.push((i, j, points));
+                }
+            }
+        }
+
+        max_weight_matching(&pairs).max_weight
     }
 }
 
@@ -316,27 +311,27 @@ impl CascadiaHawkG {
             0
         }
     }
-
-    fn separated_neighbors(
-        board: &HashMap<HexCoordinates, CascadiaTile>,
-        hawks: &HashSet<HexCoordinates>,
-        hawk: HexCoordinates,
-    ) -> Vec<(HexCoordinates, usize)> {
-        hawks
-            .iter()
-            .filter(|&&other| Self::habitats_between(board, hawks, hawk, other) >= 3)
-            .map(|&coord| (coord, 1))
-            .collect()
-    }
 }
 impl CascadiaScoringCard for CascadiaHawkG {
     fn score(&self, board: &CascadiaBoard, animals: &HexBoard<CascadiaAnimal>) -> u16 {
-        let hawks: HashSet<_> = hawk_positions(animals).into_iter().collect();
-        let graph = animals.to_graph(
-            |_, &animal| animal == CascadiaAnimal::Hawk,
-            |hawk, _| Self::separated_neighbors(board.as_ref().as_ref(), &hawks, hawk),
-        );
-        let pairs = graph.max_weight_matching();
+        let hawk_set: HashSet<_> = hawk_positions(animals).into_iter().collect();
+        let hawk_vec: Vec<_> = hawk_positions(animals).into_iter().collect();
+        let n = hawk_set.len();
+
+        let mut separated_pairs: Vec<(usize, usize, usize)> = Vec::new();
+        let board_map = board.as_ref().as_ref();
+
+        for i in 0..n {
+            let hawk_a = hawk_vec[i];
+            for j in (i+1)..n {
+                let hawk_b = hawk_vec[j];
+                if Self::habitats_between(board_map, &hawk_set, hawk_a, hawk_b) >= 3 {
+                    separated_pairs.push((i, j, 1));
+                }
+            }
+        }
+
+        let pairs = max_weight_matching(&separated_pairs).max_weight;
         Self::points(pairs)
     }
 }
