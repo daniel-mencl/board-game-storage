@@ -145,8 +145,63 @@ impl CascadiaSalmonE {
         map_count_to_points(size, 1, &Self::POINT_MAP, false)
     }
 
-    fn correct_shape(_salmon: &HashSet<HexCoordinates>) -> bool {
-        todo!()
+    fn find_endpoint(salmon: &HashSet<HexCoordinates>) -> Option<HexCoordinates> {
+        let mut endpoints = Vec::with_capacity(2);
+        for &coord in salmon {
+            let neighbor_count = HexCoordinates::CLOCKWISE_OFFSETS
+                    .iter()
+                    .filter(|&&offset| salmon.contains(&(coord + offset)))
+                    .count();
+
+            match neighbor_count {
+                1 => endpoints.push(coord),
+                2 => {}
+                _ => return None // shouldn't happen in correct salmon group
+            }
+        }
+
+        if endpoints.len() == 2 {
+            Some(endpoints[0])
+        } else {
+            None
+        }
+    }
+
+    fn correct_shape(salmon: &HashSet<HexCoordinates>) -> bool {
+        let n = salmon.len();
+        if n <= 2 {
+            return true;
+        }
+
+        let Some(first) = Self::find_endpoint(salmon) else { return false; };
+
+        let second = HexCoordinates::CLOCKWISE_OFFSETS
+            .iter()
+            .map(|&offset| first + offset)
+            .find(|neighbor| salmon.contains(neighbor))
+            .expect("Is a path with len > 2");
+
+        let third = HexCoordinates::CLOCKWISE_OFFSETS
+            .iter()
+            .map(|&offset| second + offset)
+            .find(|neighbor| salmon.contains(neighbor) && *neighbor != first)
+            .expect("Is a path with len > 2");
+
+        if (second - first) == (third - second) {
+            return false;
+        }
+
+        let delta = third - first;
+        // even salmon will be separated by delta, odd ones as well
+        for i in 3..n {
+            let start = if i % 2 == 0 { first } else { second };
+            let current = start + delta * (i / 2) as u8;
+            if !salmon.contains(&current) {
+                return false;
+            }
+        }
+
+        true
     }
 }
 impl CascadiaScoringCard for CascadiaSalmonE {
