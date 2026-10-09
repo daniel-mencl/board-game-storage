@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use super::{WispwoodPlayer, WispwoodScoringCards, WispwoodState};
 use crate::core::{PlayerScore, Score, ScoreInto};
 
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize, Default)]
 pub struct WispwoodBoardScore {
     jacks: u16,
     witches: u16,
@@ -36,7 +36,7 @@ impl WispwoodBoardScore {
     }
 }
 
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize, Default)]
 pub struct WispwoodPlayerScore {
     rounds: [WispwoodBoardScore; 3],
 }
@@ -63,6 +63,12 @@ impl WispwoodPlayer {
 #[derive(Clone, Serialize, Deserialize)]
 pub struct WispwoodScoreBreakdown {
     players: Vec<WispwoodPlayerScore>,
+}
+
+impl WispwoodScoreBreakdown {
+    pub fn new(player_count: usize) -> Self {
+        Self { players: vec![WispwoodPlayerScore::default(); player_count] }
+    }
 }
 
 impl ScoreInto<Score> for WispwoodScoreBreakdown {

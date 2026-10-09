@@ -122,12 +122,8 @@ pub struct WispwoodState {
 
 impl WispwoodState {
     pub fn new(player_count: usize) -> WispwoodState {
-        let players = (0..player_count)
-            .into_iter()
-            .map(|_| WispwoodPlayer::default())
-            .collect();
         WispwoodState {
-            players,
+            players: vec![WispwoodPlayer::default(); player_count],
             scoring_cards: WispwoodScoringCards::default(),
         }
     }

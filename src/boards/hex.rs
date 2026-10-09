@@ -157,3 +157,9 @@ impl<T> AsRef<HashMap<HexCoordinates, T>> for HexBoard<T> {
         &self.tiles
     }
 }
+
+impl<T: Default> Default for HexBoard<T> {
+    fn default() -> Self {
+        Self { tiles: HashMap::default() }
+    }
+}

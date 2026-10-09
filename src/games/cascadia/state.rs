@@ -11,8 +11,9 @@ pub enum CascadiaAnimal {
     Fox,
 }
 
-#[derive(Clone, Serialize, Deserialize, PartialEq, Eq, Copy, Hash)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Eq, Copy, Hash, Default)]
 pub enum CascadiaHabitat {
+    #[default]
     River,
     Wetland,
     Forest,
@@ -20,7 +21,7 @@ pub enum CascadiaHabitat {
     Mountain,
 }
 
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize, Default)]
 pub struct CascadiaTile {
     // https://www.redblobgames.com/grids/hexagons/#neighbors-axial
     // pointy option, start at +1, -1 (upper right) and go clockwise
@@ -29,7 +30,7 @@ pub struct CascadiaTile {
     pub animal: Option<CascadiaAnimal>,
 }
 
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize, Default)]
 pub struct CascadiaBoard {
     tiles: HexBoard<CascadiaTile>,
     nature_tokens: u16,
@@ -69,4 +70,13 @@ impl CascadiaBoard {
 pub struct CascadiaState {
     pub players: Vec<CascadiaBoard>,
     pub scoring_cards: CascadiaScoringCards,
+}
+
+impl CascadiaState {
+    pub fn new(player_count: usize) -> Self {
+        Self { 
+            players: vec![CascadiaBoard::default(); player_count],
+            scoring_cards: CascadiaScoringCards::default()
+        }
+    }
 }

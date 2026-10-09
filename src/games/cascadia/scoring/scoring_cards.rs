@@ -22,7 +22,7 @@ pub struct CascadiaScoringCards {
     fox: CascadiaFoxScoringCard,
 }
 
-#[derive(Clone, Serialize, Deserialize, Copy)]
+#[derive(Clone, Serialize, Deserialize, Copy, Default)]
 pub struct CascadiaAnimalScore {
     bears: u16,
     elks: u16,

@@ -9,7 +9,13 @@ pub struct CascadiaScoreBreakdown {
     players: Vec<CascadiaPlayerScore>,
 }
 
-#[derive(Clone, Serialize, Deserialize, Copy)]
+impl CascadiaScoreBreakdown {
+    pub fn new(player_count: usize) -> Self {
+        Self { players: vec![CascadiaPlayerScore::default(); player_count] }
+    }
+}
+
+#[derive(Clone, Serialize, Deserialize, Copy, Default)]
 pub struct CascadiaPlayerScore {
     animals: CascadiaAnimalScore,
     habitats: CascadiaHabitatScore,
@@ -65,7 +71,7 @@ impl CascadiaRawHabitatScore {
     }
 }
 
-#[derive(Clone, Serialize, Deserialize, Copy)]
+#[derive(Clone, Serialize, Deserialize, Copy, Default)]
 pub struct CascadiaSoloHabitatScore {
     size: u16,
     bonus: u16,
@@ -76,7 +82,7 @@ impl CascadiaSoloHabitatScore {
     }
 }
 
-#[derive(Clone, Serialize, Deserialize, Copy)]
+#[derive(Clone, Serialize, Deserialize, Copy, Default)]
 pub struct CascadiaHabitatScore {
     rivers: CascadiaSoloHabitatScore,
     wetlands: CascadiaSoloHabitatScore,
