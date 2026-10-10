@@ -1,4 +1,6 @@
-pub mod algorithms;
-pub mod boards;
-pub mod core;
-pub mod games;
+mod algorithms;
+mod boards;
+mod core;
+mod games;
+
+pub use core::GameRepository;

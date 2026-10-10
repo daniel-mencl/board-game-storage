@@ -1,15 +1,19 @@
 mod cascadia;
 mod wispwood;
 
+use std::collections::HashMap;
+
 use cascadia::Cascadia;
+use strum::IntoEnumIterator;
 use wispwood::Wispwood;
 
 use crate::core::{GameEngine, GameUi};
 use dioxus::prelude::*;
+use strum_macros::EnumIter;
 
 macro_rules! register_games {
     ($( $variant:ident => $game_type:path ),* $(,)?) => {
-        #[derive(Copy, Clone, Debug, PartialEq, Eq)]
+        #[derive(Copy, Clone, Debug, PartialEq, Eq, EnumIter)]
         pub enum Game {
             $( $variant, )*
         }
@@ -91,4 +95,10 @@ macro_rules! register_games {
 register_games! {
     Cascadia => Cascadia,
     Wispwood => Wispwood,
+}
+
+impl Game {
+    pub fn all_games() -> HashMap<String, Game> {
+        Game::iter().map(|game| (game.id().into(), game)).collect()
+    }
 }
