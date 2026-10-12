@@ -1,8 +1,7 @@
 pub enum RepoError {
+    Lock,
     Database(rusqlite::Error),
-    GameNotFound(String),
-    PlayerNotFound(i64),
-    InvalidState(String),
+    NotFound(String),
 }
 
 impl From<rusqlite::Error> for RepoError {
