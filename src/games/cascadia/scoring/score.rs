@@ -1,6 +1,7 @@
 use super::{CascadiaAnimalScore, CascadiaBoard, CascadiaHabitat, CascadiaState};
 use crate::{
-    boards::{HexBoard, HexCoordinates}, core::{PlayerScore, Score, ScoreInto},
+    boards::{HexBoard, HexCoordinates},
+    core::{PlayerScore, Score, ScoreInto},
 };
 use serde::{Deserialize, Serialize};
 
@@ -11,7 +12,9 @@ pub struct CascadiaScoreBreakdown {
 
 impl CascadiaScoreBreakdown {
     pub fn new(player_count: usize) -> Self {
-        Self { players: vec![CascadiaPlayerScore::default(); player_count] }
+        Self {
+            players: vec![CascadiaPlayerScore::default(); player_count],
+        }
     }
 }
 
@@ -20,7 +23,7 @@ pub struct CascadiaPlayerScore {
     animals: CascadiaAnimalScore,
     habitats: CascadiaHabitatScore,
     nature_tokens: u16,
-    total: u16
+    total: u16,
 }
 impl CascadiaPlayerScore {
     fn new(
@@ -33,7 +36,7 @@ impl CascadiaPlayerScore {
             animals,
             habitats,
             nature_tokens,
-            total
+            total,
         }
     }
 
@@ -249,9 +252,29 @@ fn calculate_habitat_bonuses(habitats: Vec<CascadiaRawHabitatScore>) -> Vec<Casc
 
 impl ScoreInto<Score> for CascadiaScoreBreakdown {
     fn score(&self) -> Score {
-        let max_score = self.players.iter().map(|player| player.total()).max().expect("More than zero players");
-        let max_score_max_nature = self.players.iter().filter(|player| player.total() == max_score).map(|player| player.nature_tokens()).max().expect("At least one player has max score");
-        let player_scores: Vec<_> = self.players.iter().map(|player| PlayerScore::new(player.total() as i16, player.total() == max_score && player.nature_tokens() == max_score_max_nature)).collect();
+        let max_score = self
+            .players
+            .iter()
+            .map(|player| player.total())
+            .max()
+            .expect("More than zero players");
+        let max_score_max_nature = self
+            .players
+            .iter()
+            .filter(|player| player.total() == max_score)
+            .map(|player| player.nature_tokens())
+            .max()
+            .expect("At least one player has max score");
+        let player_scores: Vec<_> = self
+            .players
+            .iter()
+            .map(|player| {
+                PlayerScore::scored(
+                    player.total() as i16,
+                    player.total() == max_score && player.nature_tokens() == max_score_max_nature,
+                )
+            })
+            .collect();
         Score::new(player_scores)
     }
 }

@@ -1,13 +1,23 @@
 use serde::{Serialize, de::DeserializeOwned};
 
 pub struct PlayerScore {
-    score: i16,
+    score: Option<i16>,
     is_winner: bool,
 }
 
 impl PlayerScore {
-    pub fn new(score: i16, is_winner: bool) -> PlayerScore {
-        PlayerScore { score, is_winner }
+    pub fn scored(score: i16, is_winner: bool) -> PlayerScore {
+        PlayerScore {
+            score: Some(score),
+            is_winner,
+        }
+    }
+
+    pub fn unscored(is_winner: bool) -> PlayerScore {
+        PlayerScore {
+            score: None,
+            is_winner,
+        }
     }
 }
 

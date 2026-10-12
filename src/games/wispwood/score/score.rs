@@ -67,7 +67,9 @@ pub struct WispwoodScoreBreakdown {
 
 impl WispwoodScoreBreakdown {
     pub fn new(player_count: usize) -> Self {
-        Self { players: vec![WispwoodPlayerScore::default(); player_count] }
+        Self {
+            players: vec![WispwoodPlayerScore::default(); player_count],
+        }
     }
 }
 
@@ -77,7 +79,7 @@ impl ScoreInto<Score> for WispwoodScoreBreakdown {
         let max = scores.clone().max().expect("Should have 1+ players");
         let scores = scores
             .clone()
-            .map(|score| PlayerScore::new(score as i16, score == max))
+            .map(|score| PlayerScore::scored(score as i16, score == max))
             .collect();
         Score::new(scores)
     }
