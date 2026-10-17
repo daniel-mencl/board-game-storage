@@ -120,9 +120,9 @@ pub struct WispwoodState {
     pub scoring_cards: WispwoodScoringCards,
 }
 
-impl WispwoodState {
-    pub fn new(player_count: usize) -> WispwoodState {
-        WispwoodState {
+impl From<usize> for WispwoodState {
+    fn from(player_count: usize) -> WispwoodState {
+        Self {
             players: vec![WispwoodPlayer::default(); player_count],
             scoring_cards: WispwoodScoringCards::default(),
         }

@@ -29,7 +29,7 @@ pub struct SqlitePlayerRepository {
 }
 
 impl SqlitePlayerRepository {
-    fn map_row(row: &Row) -> rusqlite::Result<Player> {
+    pub fn map_player_row(row: &Row) -> rusqlite::Result<Player> {
         Ok(Player {
             id: row.get(0)?,
             name: row.get(1)?,
@@ -46,7 +46,7 @@ impl PlayerRepository for SqlitePlayerRepository {
             .query_row(
                 "INSERT INTO players (name) VALUES (?1) RETURNING id, name, created_at",
                 params![new_player.name],
-                Self::map_row,
+                Self::map_player_row,
             )
             .map_err(|err| RepoError::Database(err))
     }
@@ -58,7 +58,7 @@ impl PlayerRepository for SqlitePlayerRepository {
             .query_row(
                 "SELECT id, name, created_at FROM players WHERE id = ?1",
                 params![id],
-                Self::map_row,
+                Self::map_player_row,
             )
             .optional()
             .map_err(RepoError::Database)
@@ -71,7 +71,7 @@ impl PlayerRepository for SqlitePlayerRepository {
             .query_row(
                 "SELECT id, name, created_at FROM players WHERE name = ?1",
                 params![name],
-                Self::map_row,
+                Self::map_player_row,
             )
             .optional()
             .map_err(RepoError::Database)
@@ -80,10 +80,10 @@ impl PlayerRepository for SqlitePlayerRepository {
     fn list_all(&self) -> Result<Vec<Player>, RepoError> {
         let connection = self.connection.lock().map_err(|_| RepoError::Lock)?;
 
-        let mut statement =
-            connection.prepare("SELECT id, name, created_at FROM players ORDER BY name ASC")?;
+        let mut statement = connection
+            .prepare_cached("SELECT id, name, created_at FROM players ORDER BY name ASC")?;
 
-        let player_iterator = statement.query_map([], Self::map_row)?;
+        let player_iterator = statement.query_map([], Self::map_player_row)?;
 
         let players = player_iterator.collect::<Result<Vec<Player>, _>>()?;
 

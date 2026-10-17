@@ -65,8 +65,8 @@ pub struct WispwoodScoreBreakdown {
     players: Vec<WispwoodPlayerScore>,
 }
 
-impl WispwoodScoreBreakdown {
-    pub fn new(player_count: usize) -> Self {
+impl From<usize> for WispwoodScoreBreakdown {
+    fn from(player_count: usize) -> Self {
         Self {
             players: vec![WispwoodPlayerScore::default(); player_count],
         }

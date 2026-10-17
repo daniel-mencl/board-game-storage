@@ -10,8 +10,8 @@ pub struct CascadiaScoreBreakdown {
     players: Vec<CascadiaPlayerScore>,
 }
 
-impl CascadiaScoreBreakdown {
-    pub fn new(player_count: usize) -> Self {
+impl From<usize> for CascadiaScoreBreakdown {
+    fn from(player_count: usize) -> Self {
         Self {
             players: vec![CascadiaPlayerScore::default(); player_count],
         }

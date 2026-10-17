@@ -72,11 +72,11 @@ pub struct CascadiaState {
     pub scoring_cards: CascadiaScoringCards,
 }
 
-impl CascadiaState {
-    pub fn new(player_count: usize) -> Self {
-        Self { 
+impl From<usize> for CascadiaState {
+    fn from(player_count: usize) -> Self {
+        Self {
             players: vec![CascadiaBoard::default(); player_count],
-            scoring_cards: CascadiaScoringCards::default()
+            scoring_cards: CascadiaScoringCards::default(),
         }
     }
 }

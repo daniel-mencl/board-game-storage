@@ -1,6 +1,5 @@
 mod scoring;
 mod state;
-mod validation;
 mod ui;
 
 use scoring::CascadiaScoreBreakdown;
@@ -8,7 +7,7 @@ use state::{CascadiaAnimal, CascadiaBoard, CascadiaHabitat, CascadiaState, Casca
 
 use crate::core::GameEngine;
 
-#[derive(Default)]
+#[derive(Default, Clone, Copy)]
 pub struct Cascadia;
 impl GameEngine for Cascadia {
     type ScoreBreakdown = CascadiaScoreBreakdown;
@@ -20,13 +19,5 @@ impl GameEngine for Cascadia {
 
     fn name(&self) -> &'static str {
         "Cascadia"
-    }
-
-    fn default_state(&self, player_count: usize) -> Self::State {
-        CascadiaState::new(player_count)
-    }
-
-    fn default_score(&self, player_count: usize) -> Self::ScoreBreakdown {
-        CascadiaScoreBreakdown::new(player_count)
     }
 }
