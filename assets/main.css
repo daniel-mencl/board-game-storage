@@ -1,34 +1,45 @@
 :root {
-    --bg-primary: #121316;
-    --bg-surface: #1e2025;
-    --accent: #3b82f6;
-    --accent-hover: #2563eb;
-    --text-primary: #f8fafc;
-    --text-secondary: #94a3b8;
-    --radius-md: 8px;
-    --spacing-sm: 8px;
-    --spacing-md: 16px;
+    --bg-primary: #F8F9FA;
+    --bg-surface: #FFFFFF;
+    --text-main: #1F2937;
+    --text-muted: #6B7280;
+    --accent-primary: #1F2937;
+    --accent-primary-hover: #111827;
+    --accent-secondary: #D97706;
+    --accent-secondary-hover: #B45309;
+    --border-color: #E5E7EB;
 }
 
 body {
     background-color: var(--bg-primary);
-    color: var(--text-primary);
+    color: var(--text-main);
     font-family: system-ui, -apple-system, sans-serif;
     margin: 0;
-    padding: var(--spacing-md);
+    padding: 24px;
 }
 
 button {
-    background-color: var(--accent);
-    color: #ffffff;
+    color: #FFFFFF;
     border: none;
-    border-radius: var(--radius-md);
-    padding: var(--spacing-sm) var(--spacing-md);
-    margin: var(--spacing-sm);
+    border-radius: 6px;
+    padding: 8px 16px;
+    font-weight: 600;
     cursor: pointer;
-    font-weight: 500;
+    transition: background-color 0.15s ease;
 }
 
-button:hover {
-    background-color: var(--accent-hover);
+button.primary {
+    background-color: var(--accent-primary);
+}
+
+button.primary:hover {
+    background-color: var(--accent-primary-hover);
+}
+
+button.secondary {
+    background-color: var(--accent-secondary);
+}
+
+button.secondary:hover {
+    background-color: var(--accent-secondary-hover);
 }
