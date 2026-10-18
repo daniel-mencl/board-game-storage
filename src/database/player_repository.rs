@@ -5,13 +5,13 @@ use std::sync::{Arc, Mutex};
 use rusqlite::{Connection, OptionalExtension, Row, params};
 
 pub struct Player {
-    id: i64,
-    name: String,
-    created_at: String,
+    pub id: i64,
+    pub name: String,
+    pub created_at: String,
 }
 
 pub struct NewPlayer {
-    name: String,
+    pub name: String,
 }
 
 pub trait PlayerRepository: Send + Sync {
@@ -45,6 +45,8 @@ impl SqlitePlayerRepository {
 impl PlayerRepository for SqlitePlayerRepository {
     fn create(&self, new_player: &NewPlayer) -> Result<Player, RepoError> {
         let connection = self.connection.lock().map_err(|_| RepoError::Lock)?;
+
+        // TODO: check whether player exists
 
         connection
             .query_row(

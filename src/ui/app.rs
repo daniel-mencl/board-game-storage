@@ -1,9 +1,6 @@
-use std::sync::Arc;
-
-use super::components::{Button, ButtonVariant};
+use super::Players;
+use super::components::Button;
 use dioxus::prelude::*;
-
-use crate::{MatchRepository, PlayerRepository};
 
 #[derive(Clone, Copy)]
 enum Screen {
@@ -54,24 +51,6 @@ fn Matches(on_back: EventHandler<()>) -> Element {
             Button {
                 on_click: move |_| on_back.call(()),
                 "<- Back"
-            }
-        }
-    }
-}
-
-#[component]
-fn Players(on_back: EventHandler<()>) -> Element {
-    rsx! {
-        div {
-            h1 { "Players" }
-            Button {
-                on_click: move |_| on_back.call(()),
-                "<- Back"
-            }
-            Button {
-                variant: ButtonVariant::Secondary,
-                on_click: move |_| println!("Clicked"),
-                "Add player"
             }
         }
     }
