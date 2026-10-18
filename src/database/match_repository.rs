@@ -70,7 +70,7 @@ pub struct MatchDetails {
     participants: Vec<(Player, MatchParticipant)>,
 }
 
-pub trait MatchRepository {
+pub trait MatchRepository: Send + Sync {
     fn create(&self, new_match: &NewMatch) -> Result<MatchDetails, RepoError>;
     fn get_by_id(&self, id: i64) -> Result<Option<MatchDetails>, RepoError>;
     fn list_by_game(&self, game_id: &str) -> Result<Vec<MatchDetails>, RepoError>;

@@ -14,7 +14,7 @@ pub struct NewPlayer {
     name: String,
 }
 
-pub trait PlayerRepository {
+pub trait PlayerRepository: Send + Sync {
     fn create(&self, new_player: &NewPlayer) -> Result<Player, RepoError>;
     fn get_by_id(&self, id: i64) -> Result<Option<Player>, RepoError>;
     fn get_by_name(&self, name: &str) -> Result<Option<Player>, RepoError>;
@@ -29,6 +29,10 @@ pub struct SqlitePlayerRepository {
 }
 
 impl SqlitePlayerRepository {
+    pub fn new(connection: Arc<Mutex<Connection>>) -> Self {
+        Self { connection }
+    }
+
     pub fn map_player_row(row: &Row) -> rusqlite::Result<Player> {
         Ok(Player {
             id: row.get(0)?,
