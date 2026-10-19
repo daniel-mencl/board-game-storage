@@ -2,7 +2,8 @@ use board_game_storage::{
     App, GameRepository, MatchRepository, PlayerRepository, SqliteMatchRepository,
     SqlitePlayerRepository, establish_connection,
 };
-use dioxus::desktop::Config;
+use dioxus::desktop::{Config, WindowBuilder, LogicalSize};
+
 
 use std::sync::Arc;
 
@@ -16,7 +17,14 @@ fn main() {
         SqliteMatchRepository::new(Arc::clone(&connection), GameRepository::default());
     let match_repository: Arc<dyn MatchRepository> = Arc::new(match_repository);
 
-    let config = Config::new().with_menu(None);
+    let window = WindowBuilder::new()
+        .with_title("Board Game Storage")
+        .with_inner_size(LogicalSize::new(900.0, 650.0))
+        .with_min_inner_size(LogicalSize::new(400.0, 300.0))
+        .with_maximized(false)
+        .with_resizable(true);
+
+    let config = Config::new().with_menu(None).with_window(window);
 
     dioxus::LaunchBuilder::new()
         .with_cfg(config)
